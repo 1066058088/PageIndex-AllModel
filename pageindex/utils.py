@@ -29,20 +29,50 @@ def count_tokens(text, model=None):
     return litellm.token_counter(model=model, text=text)
 
 
-def llm_completion(model, prompt, chat_history=None, return_finish_reason=False):
+def llm_completion(model, prompt, chat_history=None, return_finish_reason=False, return_tokens=False):
     if model:
         model = model.removeprefix("litellm/")
     max_retries = 10
     messages = list(chat_history) + [{"role": "user", "content": prompt}] if chat_history else [{"role": "user", "content": prompt}]
     for i in range(max_retries):
         try:
-            response = litellm.completion(
-                model=model,
-                messages=messages,
-                temperature=0,
-            )
+            # 为不同的模型提供商设置特定参数
+            kwargs = {
+                "model": model,
+                "messages": messages,
+                "temperature": 0,
+            }
+            
+            # 处理国产AI模型的特殊情况
+            if model and "baidu" in model:
+                # 百度文心一言特定参数
+                pass
+            elif model and "ali" in model:
+                # 阿里通义千问特定参数
+                pass
+            elif model and "tencent" in model:
+                # 腾讯混元大模型特定参数
+                pass
+            elif model and "zhipu" in model:
+                # 智谱AI特定参数
+                pass
+            
+            response = litellm.completion(**kwargs)
             content = response.choices[0].message.content
-            if return_finish_reason:
+            
+            # 获取token消耗信息
+            tokens = {
+                "prompt_tokens": getattr(response, 'usage', {}).get('prompt_tokens', 0),
+                "completion_tokens": getattr(response, 'usage', {}).get('completion_tokens', 0),
+                "total_tokens": getattr(response, 'usage', {}).get('total_tokens', 0)
+            }
+            
+            if return_tokens:
+                if return_finish_reason:
+                    finish_reason = "max_output_reached" if response.choices[0].finish_reason == "length" else "finished"
+                    return content, finish_reason, tokens
+                return content, tokens
+            elif return_finish_reason:
                 finish_reason = "max_output_reached" if response.choices[0].finish_reason == "length" else "finished"
                 return content, finish_reason
             return content
@@ -53,7 +83,11 @@ def llm_completion(model, prompt, chat_history=None, return_finish_reason=False)
                 time.sleep(1)
             else:
                 logging.error('Max retries reached for prompt: ' + prompt)
-                if return_finish_reason:
+                if return_tokens:
+                    if return_finish_reason:
+                        return "", "error", {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}
+                    return "", {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}
+                elif return_finish_reason:
                     return "", "error"
                 return ""
 
@@ -66,11 +100,28 @@ async def llm_acompletion(model, prompt):
     messages = [{"role": "user", "content": prompt}]
     for i in range(max_retries):
         try:
-            response = await litellm.acompletion(
-                model=model,
-                messages=messages,
-                temperature=0,
-            )
+            # 为不同的模型提供商设置特定参数
+            kwargs = {
+                "model": model,
+                "messages": messages,
+                "temperature": 0,
+            }
+            
+            # 处理国产AI模型的特殊情况
+            if model and "baidu" in model:
+                # 百度文心一言特定参数
+                pass
+            elif model and "ali" in model:
+                # 阿里通义千问特定参数
+                pass
+            elif model and "tencent" in model:
+                # 腾讯混元大模型特定参数
+                pass
+            elif model and "zhipu" in model:
+                # 智谱AI特定参数
+                pass
+            
+            response = await litellm.acompletion(**kwargs)
             return response.choices[0].message.content
         except Exception as e:
             print('************* Retrying *************')

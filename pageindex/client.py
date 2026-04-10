@@ -32,11 +32,45 @@ class PageIndexClient:
 
     For agent-based QA, see examples/agentic_vectorless_rag_demo.py.
     """
-    def __init__(self, api_key: str = None, model: str = None, retrieve_model: str = None, workspace: str = None):
+    def __init__(self, api_key: str = None, model: str = None, retrieve_model: str = None, workspace: str = None, api_base: str = None):
+        # 支持多种AI提供商的API密钥
+        # 优先使用参数提供的api_key
+        # 如果没有提供，则从统一的API_KEY环境变量获取
+        api_key = api_key or os.getenv("API_KEY")
+        
+        # 优先使用参数提供的model
+        # 如果没有提供，则从环境变量获取
+        model = model or os.getenv("MODEL")
+        
         if api_key:
-            os.environ["OPENAI_API_KEY"] = api_key
+            # 自动检测模型类型并设置相应的API密钥环境变量
+            if model and any(prefix in model for prefix in ["openai", "gpt"]):
+                os.environ["OPENAI_API_KEY"] = api_key
+            elif model and any(prefix in model for prefix in ["anthropic", "claude"]):
+                os.environ["ANTHROPIC_API_KEY"] = api_key
+            elif model and any(prefix in model for prefix in ["gemini", "google"]):
+                os.environ["GOOGLE_API_KEY"] = api_key
+            elif model and any(prefix in model for prefix in ["azure"]):
+                os.environ["AZURE_OPENAI_API_KEY"] = api_key
+            elif model and any(prefix in model for prefix in ["baidu", "ernie"]):
+                os.environ["BAIDU_API_KEY"] = api_key
+                os.environ["BAIDU_SECRET_KEY"] = os.getenv("BAIDU_SECRET_KEY", "")
+            elif model and any(prefix in model for prefix in ["ali", "qwen", "dashscope"]):
+                os.environ["DASHSCOPE_API_KEY"] = api_key
+            elif model and any(prefix in model for prefix in ["tencent", "hunyuan"]):
+                os.environ["TENCENT_API_KEY"] = api_key
+            else:
+                # 默认设置为OPENAI_API_KEY
+                os.environ["OPENAI_API_KEY"] = api_key
+        # 处理其他API密钥环境变量
         elif not os.getenv("OPENAI_API_KEY") and os.getenv("CHATGPT_API_KEY"):
             os.environ["OPENAI_API_KEY"] = os.getenv("CHATGPT_API_KEY")
+        
+        # 从环境变量获取API基础URL，如果参数提供了则覆盖
+        api_base = api_base or os.getenv("API_BASE")
+        if api_base:
+            os.environ["OPENAI_API_BASE"] = api_base
+        
         self.workspace = Path(workspace).expanduser() if workspace else None
         overrides = {}
         if model:

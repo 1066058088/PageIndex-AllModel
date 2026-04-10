@@ -151,16 +151,60 @@ pip3 install --upgrade -r requirements.txt
 
 ### 2. Set your LLM API key
 
-Create a `.env` file in the root directory with your LLM API key, with multi-LLM support via [LiteLLM](https://docs.litellm.ai/docs/providers):
+Create a `.env` file in the root directory with your LLM API key. PageIndex supports multiple LLM providers via [LiteLLM](https://docs.litellm.ai/docs/providers), including domestic AI models:
 
+#### OpenAI (default)
 ```bash
 OPENAI_API_KEY=your_openai_key_here
 ```
 
+#### 国产AI模型支持
+
+##### 百度文心一言
+```bash
+BAIDU_API_KEY=your_baidu_api_key_here
+BAIDU_SECRET_KEY=your_baidu_secret_key_here
+```
+
+##### 阿里通义千问
+```bash
+DASHSCOPE_API_KEY=your_dashscope_api_key_here
+```
+
+##### 腾讯混元大模型
+```bash
+TENCENT_API_KEY=your_tencent_api_key_here
+```
+
+##### 智谱AI
+```bash
+ZHIPUAI_API_KEY=your_zhipuai_api_key_here
+```
+
 ### 3. Generate PageIndex structure for your PDF
 
+#### 使用OpenAI模型（默认）
 ```bash
 python3 run_pageindex.py --pdf_path /path/to/your/document.pdf
+```
+
+#### 使用国产AI模型
+
+```bash
+# 使用百度文心一言
+python3 run_pageindex.py --pdf_path /path/to/your/document.pdf --model baidu/ERNIE-Bot-4
+
+# 使用阿里通义千问
+python3 run_pageindex.py --pdf_path /path/to/your/document.pdf --model dashscope/qwen-turbo
+
+# 或使用其他阿里模型变体
+# python3 run_pageindex.py --pdf_path /path/to/your/document.pdf --model dashscope/qwen-plus
+
+# 使用腾讯混元大模型
+python3 run_pageindex.py --pdf_path /path/to/your/document.pdf --model tencent/hunyuan-pro
+
+# 使用智谱AI
+python3 run_pageindex.py --pdf_path /path/to/your/document.pdf --model zhipu/chatglm3
 ```
 
 <details>
